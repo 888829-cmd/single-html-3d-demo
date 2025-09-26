@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI工具平台</title>
+    <!-- 引入Bootstrap样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Font Awesome（图标库） -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Three.js 核心库 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- 模型交互控制器（OrbitControls） -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- 3D 模型加载器（GLTFLoader） -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入自定义CSS -->
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(52, 152, 219, 0.05) 0%, transparent 20%);
+            background-attachment: fixed;
+        }
+
+        /* 导航区样式 */
+        .nav-container {
+            max-width: 1000px;
+            margin: 50px auto;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .nav-title {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 50px;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 15px;
+        }
+
+        .nav-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background-color: #3498db;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .nav-title:hover::after {
+            width: 120px;
+        }
+
+        .function-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 40px;
+            justify-items: center;
+        }
+
+        .function-item {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            width: 100%;
+            max-width: 220px;
+        }
+
+        .function-item:hover {
+            transform: translateY(-10px) scale(1.03);
+        }
+
+        .function-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .function-item:hover .function-card {
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.15);
+        }
+
+        .function-img-container {
+            position: relative;
+            height: 160px;
+            overflow: hidden;
+        }
+
+        .function-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .function-item:hover .function-img {
+            transform: scale(1.1);
+        }
+
+        .function-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, 
+                rgba(0,0,0,0) 0%, 
+                rgba(0,0,0,0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .function-item:hover .function-overlay {
+            opacity: 1;
+        }
+
+        .function-name {
+            padding: 20px 15px;
+            color: #34495e;
+            font-size: 18px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .function-item:hover .function-name {
+            color: #3498db;
+        }
+
+        .function-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+            padding: 0 15px 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            height: 0;
+            overflow: hidden;
+        }
+
+        .function-item:hover .function-desc {
+            opacity: 1;
+            transform: translateY(0);
+            height: auto;
+        }
+
+        /* 文生图功能区样式 */
+        .text2img-container {
+            display: none; /* 初始隐藏 */
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 3D模型查看器功能区 */
+        .model-viewer-container {
+            display: none; /* 初始隐藏 */
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .text2img-title, .model-viewer-title {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .text2img-title::after, .model-viewer-title::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #2980b9;
+            transition: width 0.3s ease;
+        }
+
+        .text2img-title:hover::after, .model-viewer-title:hover::after {
+            width: 100%;
+        }
+
+        /* 新增：画廊布局和表单样式 */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .gallery-img {
+            width: 100%;
+            height: 256px;
+            object-fit: contain;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            border-color: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+            border-color: #7f8c8d;
+        }
+        .slider-group {
+            margin-bottom: 1.5rem;
+        }
+        .text-muted {
+            color: #7f8c8d !important;
+        }
+
+        /* 加载动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            display: none;
+            border: 5px solid rgba(52, 152, 219, 0.1);
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        /* 抖动动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* 3D模型查看器样式 */
+        .model-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transition: all 500ms ease;
+            height: calc(100vh - 14rem);
+            min-height: 400px;
+        }
+        .control-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 9999px;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 300ms ease;
+        }
+        .control-btn:hover {
+            background-color: #165DFF;
+            color: white;
+            transform: scale(1.05);
+        }
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+        .control-panel {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 300ms ease;
+        }
+        .control-panel:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 300ms ease;
+        }
+        .upload-area:hover {
+            border-color: #165DFF;
+            background-color: rgba(22, 93, 255, 0.05);
+        }
+        .glass-effect {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+    <script>
+        // 配置Tailwind自定义颜色
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36BFFA',
+                        dark: '#1D2939',
+                        light: '#F9FAFB',
+                        accent: '#7C3AED'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- 导航区（默认显示） -->
+    <div class="nav-container" id="navArea">
+        <h1 class="nav-title">AI工具导航</h1>
+        <div class="function-grid">
+            <!-- 文生图图片按钮 -->
+            <div class="function-item" onclick="showText2Img()">
+                <div class="function-card">
+                    <div class="function-img-container">
+                        <img src="文生图需求.png" class="function-img" alt="文生图">
+                        <div class="function-overlay"></div>
+                    </div>
+                    <p class="function-name">文生图</p>
+                    <p class="function-desc">根据文字描述生成对应图片</p>
+                </div>
+            </div>
+
+            <!-- 图生3D功能 -->
+            <div class="function-item" onclick="showModelViewer()">
+                <div class="function-card">
+                    <div class="function-img-container">
+                        <img src="生成图生 3D 主题图片.png" class="function-img" alt="图生3D">
+                        <div class="function-overlay"></div>
+                    </div>
+                    <p class="function-name">图生3D</p>
+                    <p class="function-desc">将2D图片转换为3D模型</p>
+                </div>
+            </div>
+
+            <!-- 语义分割功能 -->
+            <div class="function-item">
+                <div class="function-card">
+                    <div class="function-img-container">
+                        <img src="语义分割.png" class="function-img" alt="语义分割">
+                        <div class="function-overlay"></div>
+                    </div>
+                    <p class="function-name">语义分割</p>
+                    <p class="function-desc">对图像进行像素级语义分类</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文生图功能区 -->
+    <div class="text2img-container" id="text2ImgArea">
+        <h2 class="text2img-title">文生图功能（带Canny边缘控制）</h2>
+        
+        <div class="text2img-content">
+            <p class="text-muted">提示：使用清晰详细的提示语可以获得更好的生成结果！Canny边缘图像可用于控制生成图像的轮廓。</p>
+
+            <!-- 生成状态 -->
+            <div class="mb-3">
+                <label class="form-label">生成状态</label>
+                <input type="text" id="statusMsg" class="form-control" value="就绪" disabled>
+            </div>
+
+            <!-- 第一行滑块：CFG权重 + 温度参数 -->
+            <div class="row slider-group">
+                <div class="col-md-6">
+                    <label class="form-label">CFG权重</label>
+                    <input type="range" id="cfgWeight" class="form-range" min="1" max="20" step="0.5" value="5">
+                    <div class="text-end text-sm text-muted" id="cfgWeightValue">当前值：5.0</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">温度参数</label>
+                    <input type="range" id="temperature" class="form-range" min="0.01" max="2.0" step="0.05" value="1.0">
+                    <div class="text-end text-sm text-muted" id="temperatureValue">当前值：1.0</div>
+                </div>
+            </div>
+
+            <!-- 第二行滑块：Canny低阈值 + Canny高阈值 -->
+            <div class="row slider-group">
+                <div class="col-md-6">
+                    <label class="form-label">Canny低阈值</label>
+                    <input type="range" id="cannyLow" class="form-range" min="1" max="255" step="1" value="100">
+                    <div class="text-end text-sm text-muted" id="cannyLowValue">当前值：100</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Canny高阈值</label>
+                    <input type="range" id="cannyHigh" class="form-range" min="1" max="255" step="1" value="200">
+                    <div class="text-end text-sm text-muted" id="cannyHighValue">当前值：200</div>
+                </div>
+            </div>
+
+            <!-- 第三行：Canny图像上传 + 提示语文本框 -->
+            <div class="row slider-group">
+                <div class="col-md-4">
+                    <label class="form-label">Canny控制图像（可选）</label>
+                    <!-- 图像上传和预览 -->
+                    <div class="card">
+                        <div class="card-body text-center p-3" style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                            <img id="cannyPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23dee2e6' viewBox='0 0 16 16'%3E%3Cpath d='M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z'/%3E%3C/svg%3E" 
+                                class="img-fluid" alt="Canny图像预览">
+                        </div>
+                        <div class="card-footer p-2">
+                            <input type="file" id="cannyImageInput" class="form-control form-control-sm" accept="image/*" onchange="previewCannyImage(event)">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">提示语</label>
+                    <textarea id="promptInput" class="form-control" rows="3" placeholder="输入详细的图像描述..."></textarea>
+                </div>
+            </div>
+
+            <!-- 第四行：随机种子 + 并行生成数量 -->
+            <div class="row slider-group">
+                <div class="col-md-4">
+                    <label class="form-label">随机种子（可选）</label>
+                    <input type="number" id="seedInput" class="form-control" placeholder="输入整数（留空则随机）" min="0">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">并行生成数量</label>
+                    <input type="range" id="parallelSize" class="form-range" min="1" max="4" step="1" value="2">
+                    <div class="text-end text-sm text-muted" id="parallelSizeValue">当前值：2</div>
+                </div>
+            </div>
+
+            <!-- 按钮组：生成 + 清除 + 保存 -->
+            <div class="row slider-group">
+                <div class="col-md-4">
+                    <button id="generateBtn" class="btn btn-primary w-100" onclick="showLoading()">生成图像</button>
+                </div>
+                <div class="col-md-4">
+                    <button id="clearBtn" class="btn btn-secondary w-100" onclick="clearInputs()">清除输入</button>
+                </div>
+                <div class="col-md-4">
+                    <button id="saveBtn" class="btn btn-secondary w-100" onclick="saveAllImages()">保存所有图像</button>
+                </div>
+            </div>
+
+            <!-- 生成结果画廊 -->
+            <div class="slider-group">
+                <label class="form-label">生成结果</label>
+                <div id="imageGallery" class="gallery">
+                    <!-- 生成的图片将通过JS动态插入 -->
+                </div>
+            </div>
+
+            <div class="loading" id="loadingIndicator"></div>
+            
+            <!-- 返回导航区按钮 -->
+            <button class="back-btn btn btn-secondary" onclick="showNav()">返回工具导航</button>
+        </div>
+    </div>
+
+    <!-- 3D模型查看器功能区 -->
+    <div class="model-viewer-container" id="modelViewerArea">
+        <h2 class="model-viewer-title">3D模型交互查看器</h2>
+        <p class="text-muted mb-6">使用鼠标与3D模型交互：拖动旋转，滚轮缩放，按住Shift键平移</p>
+        
+        <!-- 3D模型渲染区域 -->
+        <div class="model-container bg-gray-100 mb-6">
+            <canvas id="modelCanvas" class="w-full h-full"></canvas>
+            
+            <!-- 加载指示器 -->
+            <div id="modelLoader" class="absolute inset-0 flex items-center justify-center glass-effect z-10">
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p class="text-primary font-medium">加载模型中...</p>
+                </div>
+            </div>
+            
+            <!-- 模型信息浮层 -->
+            <div id="modelInfo" class="absolute top-4 left-4 glass-effect px-4 py-2 rounded-lg shadow-md opacity-0 transition-opacity duration-300">
+                <p id="modelName" class="font-medium"></p>
+                <p id="modelSize" class="text-sm text-gray-500"></p>
+            </div>
+        </div>
+        
+        <!-- 控制面板 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧控制按钮 -->
+            <div class="lg:col-span-1 control-panel">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fa fa-sliders mr-2 text-primary"></i>模型控制
+                </h2>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    <button id="resetView" class="control-btn" title="重置视图">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button id="toggleWireframe" class="control-btn" title="线框模式">
+                        <i class="fa fa-th-large"></i>
+                    </button>
+                    <button id="toggleAxis" class="control-btn" title="显示坐标轴">
+                        <i class="fa fa-arrows"></i>
+                    </button>
+                    <button id="toggleAnimation" class="control-btn" title="播放/暂停动画">
+                        <i class="fa fa-play"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">背景颜色</label>
+                        <input type="color" id="bgColorPicker" value="#f3f4f6" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer transition-transform duration-200 hover:scale-[1.02]">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">模型颜色</label>
+                        <input type="color" id="modelColorPicker" value="#165DFF" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer transition-transform duration-200 hover:scale-[1.02]">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            旋转速度 
+                            <span id="rotationSpeedValue" class="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">0</span>
+                        </label>
+                        <input type="range" id="rotationSpeed" min="0" max="0.1" step="0.001" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧模型选择和上传 -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- 预设模型选择 -->
+                <div class="control-panel">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fa fa-cube mr-2 text-primary"></i>预设模型
+                    </h2>
+                    
+                    <select id="modelSelector" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200">
+                        <option value="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf">破损头盔</option>
+                        <option value="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf">飞行头盔</option>
+                        <option value="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/LittlestTokyo/glTF/LittlestTokyo.gltf">东京街景</option>
+                    </select>
+                </div>
+                
+                <!-- 本地模型上传 -->
+                <div class="control-panel">
+                    <h2 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fa fa-upload mr-2 text-primary"></i>上传本地模型
+                    </h2>
+                    
+                    <div class="upload-area" id="uploadArea">
+                        <input type="file" id="modelUpload" class="hidden" accept=".gltf,.glb" multiple directory webkitdirectory mozdirectory>
+                        <label for="modelUpload" class="cursor-pointer">
+                            <i class="fa fa-folder-open text-4xl text-gray-400 mb-3 transition-colors duration-300 hover:text-primary"></i>
+                            <p class="text-gray-600 mb-1">点击或拖拽文件夹到此处</p>
+                            <p class="text-xs text-gray-400">支持 .gltf, .glb 格式模型及相关资源文件</p>
+                        </label>
+                    </div>
+                    
+                    <div id="uploadedFiles" class="mt-4 hidden">
+                        <h3 class="font-medium mb-2 text-sm text-gray-700">已上传文件:</h3>
+                        <ul id="fileList" class="text-sm text-gray-600 max-h-32 overflow-y-auto"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 返回导航区按钮 -->
+        <button class="back-btn btn btn-secondary mt-8" onclick="showNav()">返回工具导航</button>
+    </div>
+
+    <script>
+        // 获取区域元素
+        const navArea = document.getElementById('navArea');
+        const text2ImgArea = document.getElementById('text2ImgArea');
+        const modelViewerArea = document.getElementById('modelViewerArea');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const imageGallery = document.getElementById('imageGallery');
+        const statusEl = document.getElementById('statusMsg');
+
+        // 全局变量：存储Canny图像的Base64编码
+        let cannyImageBase64 = null;
+
+        // 显示文生图功能区，隐藏导航区
+        function showText2Img() {
+            navArea.style.display = 'none';
+            modelViewerArea.style.display = 'none';
+            text2ImgArea.style.display = 'block';
+            // 初始化滑块监听
+            initSliderListeners();
+            // 添加进入动画
+            text2ImgArea.style.opacity = '0';
+            setTimeout(() => {
+                text2ImgArea.style.transition = 'opacity 0.5s ease';
+                text2ImgArea.style.opacity = '1';
+            }, 10);
+        }
+
+        // 显示3D模型查看器，隐藏导航区
+        function showModelViewer() {
+            navArea.style.display = 'none';
+            text2ImgArea.style.display = 'none';
+            modelViewerArea.style.display = 'block';
+            // 添加进入动画
+            modelViewerArea.style.opacity = '0';
+            setTimeout(() => {
+                modelViewerArea.style.transition = 'opacity 0.5s ease';
+                modelViewerArea.style.opacity = '1';
+                // 初始化3D场景
+                initScene();
+            }, 10);
+        }
+
+        // 显示导航区，隐藏其他功能区
+        function showNav() {
+            // 为当前显示的区域添加淡出动画
+            if (text2ImgArea.style.display === 'block') {
+                text2ImgArea.style.opacity = '0';
+            } else if (modelViewerArea.style.display === 'block') {
+                modelViewerArea.style.opacity = '0';
+                // 停止3D渲染循环
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+            }
+            
+            setTimeout(() => {
+                text2ImgArea.style.display = 'none';
+                modelViewerArea.style.display = 'none';
+                navArea.style.display = 'block';
+                // 重置结果区域
+                clearInputs();
+                loadingIndicator.style.display = 'none';
+            }, 300);
+        }
+
+        // 1. 滑块值实时显示
+        function initSliderListeners() {
+            const sliders = [
+                { id: 'cfgWeight', valueId: 'cfgWeightValue', formatter: (v) => `当前值：${v}` },
+                { id: 'temperature', valueId: 'temperatureValue', formatter: (v) => `当前值：${v}` },
+                { id: 'cannyLow', valueId: 'cannyLowValue', formatter: (v) => `当前值：${v}` },
+                { id: 'cannyHigh', valueId: 'cannyHighValue', formatter: (v) => `当前值：${v}` },
+                { id: 'parallelSize', valueId: 'parallelSizeValue', formatter: (v) => `当前值：${v}` }
+            ];
+
+            sliders.forEach(({ id, valueId, formatter }) => {
+                const slider = document.getElementById(id);
+                const valueEl = document.getElementById(valueId);
+                slider.addEventListener('input', () => {
+                    valueEl.textContent = formatter(slider.value);
+                    // 特殊处理：Canny低阈值变化时，确保高阈值 > 低阈值
+                    if (id === 'cannyLow') {
+                        const cannyHigh = document.getElementById('cannyHigh');
+                        if (parseInt(slider.value) >= parseInt(cannyHigh.value)) {
+                            cannyHigh.value = parseInt(slider.value) + 1;
+                            document.getElementById('cannyHighValue').textContent = `当前值：${cannyHigh.value}`;
+                        }
+                    }
+                });
+            });
+        }
+
+        // 2. Canny图像预览与Base64转换
+        function previewCannyImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // 显示预览
+                document.getElementById('cannyPreview').src = e.target.result;
+                // 保存Base64（后续传给后端）
+                cannyImageBase64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 3. 显示加载状态并执行生成逻辑
+        function showLoading() {
+            const promptInput = document.getElementById('promptInput');
+            if (!promptInput.value.trim()) {
+                // 输入框抖动效果
+                promptInput.style.animation = 'none';
+                setTimeout(() => {
+                    promptInput.style.animation = 'shake 0.5s ease';
+                }, 10);
+                return;
+            }
+            
+            loadingIndicator.style.display = 'block';
+            imageGallery.innerHTML = '<p class="text-center w-100">正在生成图片，请稍候...</p>';
+            statusEl.value = '正在生成图像，请稍候...';
+            
+            // 执行生成逻辑
+            generateImage();
+        }
+
+        // 4. 生成图像核心逻辑（调用后端API）
+        async function generateImage() {
+            const prompt = document.getElementById('promptInput').value.trim();
+
+            // 收集参数
+            const params = {
+                prompt: prompt,
+                seed: document.getElementById('seedInput').value || null, // 空字符串转null
+                cfg_weight: parseFloat(document.getElementById('cfgWeight').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                canny_low: parseInt(document.getElementById('cannyLow').value),
+                canny_high: parseInt(document.getElementById('cannyHigh').value),
+                parallel_size: parseInt(document.getElementById('parallelSize').value),
+                canny_image: cannyImageBase64 // 可为null（未上传时）
+            };
+
+            try {
+                // 调用后端API（需替换为实际后端地址）
+                const response = await fetch('http://127.0.0.1:8000/generate-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params),
+                    mode: 'cors' // 允许跨域（开发环境）
+                });
+
+                if (!response.ok) throw new Error(`HTTP错误：${response.status}`);
+                const data = await response.json();
+
+                if (data.success && data.images.length > 0) {
+                    // 显示生成的图片
+                    imageGallery.innerHTML = '';
+                    data.images.forEach((imgBase64, index) => {
+                        const imgEl = document.createElement('img');
+                        imgEl.src = imgBase64;
+                        imgEl.className = 'gallery-img';
+                        imgEl.alt = `生成结果 ${index + 1}`;
+                        imageGallery.appendChild(imgEl);
+                    });
+                    statusEl.value = `生成成功！共生成${data.images.length}张图像`;
+                } else {
+                    throw new Error(data.message || '未返回有效图像');
+                }
+            } catch (error) {
+                statusEl.value = `生成失败：${error.message}`;
+                // 显示错误提示图
+                imageGallery.innerHTML = '';
+                const errorImg = document.createElement('img');
+                errorImg.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="256" height="256" fill="%23dc3545" viewBox="0 0 16 16"%3E%3Cpath d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/%3E%3Cpath d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/%3E%3C/svg%3E';
+                errorImg.className = 'gallery-img';
+                errorImg.alt = '生成错误';
+                imageGallery.appendChild(errorImg);
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        // 5. 清除所有输入
+        function clearInputs() {
+            // 重置文本框
+            document.getElementById('promptInput').value = '';
+            document.getElementById('seedInput').value = '';
+            // 重置滑块（恢复默认值）
+            const defaultValues = {
+                cfgWeight: 5,
+                temperature: 1.0,
+                cannyLow: 100,
+                cannyHigh: 200,
+                parallelSize: 2
+            };
+            Object.entries(defaultValues).forEach(([id, val]) => {
+                const slider = document.getElementById(id);
+                slider.value = val;
+                document.getElementById(`${id}Value`).textContent = `当前值：${val}`;
+            });
+            // 重置Canny图像
+            const defaultPreview = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23dee2e6" viewBox="0 0 16 16"%3E%3Cpath d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"/%3E%3C/svg%3E';
+            document.getElementById('cannyPreview').src = defaultPreview;
+            document.getElementById('cannyImageInput').value = '';
+            cannyImageBase64 = null;
+            // 清空画廊和状态
+            imageGallery.innerHTML = '';
+            statusEl.value = '就绪';
+        }
+
+        // 6. 保存所有生成的图像
+        function saveAllImages() {
+            const imgs = imageGallery.querySelectorAll('img');
+            if (imgs.length === 0) {
+                alert('没有可保存的图像！');
+                return;
+            }
+
+            // 生成时间戳（避免文件名重复）
+            const timestamp = new Date().toISOString().replace(/[-:\.T]/g, '').slice(0, 14);
+            imgs.forEach((img, index) => {
+                // 创建下载链接
+                const a = document.createElement('a');
+                a.href = img.src;
+                a.download = `ai-generated-${timestamp}-${index + 1}.png`;
+                // 触发下载
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+
+            statusEl.value = `已保存${imgs.length}张图像`;
+        }
+
+        // 3D模型查看器相关变量和函数
+        let scene, camera, renderer, controls, currentModel, axisHelper, animationId;
+        let isAnimating = false;
+        let rotationSpeed = 0;
+        let uploadedFiles = new Map(); // 存储上传的文件，用于处理相对路径
+        
+        // 初始化3D场景
+        function initScene() {
+            // 如果已经初始化过，先清理
+            if (scene) {
+                // 清除之前的场景
+                while (scene.children.length > 0) {
+                    scene.remove(scene.children[0]);
+                }
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+            }
+            
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf3f4f6);
+            
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(
+                75, 
+                document.getElementById('modelCanvas').clientWidth / document.getElementById('modelCanvas').clientHeight, 
+                0.1, 
+                1000
+            );
+            camera.position.z = 5;
+            
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('modelCanvas'),
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(
+                document.getElementById('modelCanvas').clientWidth, 
+                document.getElementById('modelCanvas').clientHeight
+            );
+            renderer.shadowMap.enabled = true;
+            
+            // 添加环境光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            // 添加方向光（带阴影）
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // 配置阴影属性
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 500;
+            
+            // 添加辅助坐标轴
+            axisHelper = new THREE.AxesHelper(5);
+            scene.add(axisHelper);
+            
+            // 添加网格辅助线
+            const gridHelper = new THREE.GridHelper(10, 10);
+            scene.add(gridHelper);
+            
+            // 添加控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.1;
+            controls.enablePan = true;
+            controls.enableZoom = true;
+            
+            // 初始加载模型
+            loadModel(document.getElementById('modelSelector').value);
+            
+            // 处理窗口大小变化
+            window.addEventListener('resize', onWindowResize);
+            
+            // 初始化控制事件
+            initModelControls();
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        // 加载3D模型
+        function loadModel(modelUrl, isLocal = false) {
+            // 显示加载指示器
+            document.getElementById('modelLoader').style.display = 'flex';
+            hideModelInfo();
+            
+            // 移除当前模型
+            if (currentModel) {
+                scene.remove(currentModel);
+                currentModel = null;
+            }
+            
+            // 创建GLTF加载器
+            const loader = new THREE.GLTFLoader();
+            
+            // 如果是本地文件，配置加载器处理相对路径
+            if (isLocal) {
+                // 创建自定义资源管理器
+                loader.setResourcePath('');
+                loader.setLoaderMiddleware((url, loader) => {
+                    const file = uploadedFiles.get(url);
+                    if (file) {
+                        return new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            
+                            // 根据文件类型选择读取方式
+                            if (url.endsWith('.glb') || url.endsWith('.bin')) {
+                                reader.readAsArrayBuffer(file);
+                            } else {
+                                reader.readAsText(file);
+                            }
+                            
+                            reader.addEventListener('load', function(event) {
+                                resolve(event.target.result);
+                            });
+                            
+                            reader.addEventListener('error', reject);
+                        });
+                    }
+                    return null;
+                });
+            }
+            
+            // 加载模型
+            loader.load(
+                modelUrl,
+                (gltf) => {
+                    currentModel = gltf.scene;
+                    
+                    // 启用阴影
+                    currentModel.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    
+                    // 调整模型大小和位置
+                    adjustModel(currentModel);
+                    
+                    // 添加到场景
+                    scene.add(currentModel);
+                    
+                    // 显示模型信息
+                    showModelInfo(modelUrl, isLocal);
+                    
+                    // 隐藏加载指示器
+                    document.getElementById('modelLoader').style.display = 'none';
+                },
+                (xhr) => {
+                    // 加载进度
+                    console.log((xhr.loaded / xhr.total * 100) + '% 已加载');
+                },
+                (error) => {
+                    // 加载错误
+                    console.error('模型加载错误:', error);
+                    document.getElementById('modelLoader').innerHTML = `
+                        <div class="text-red-500 text-center">
+                            <i class="fa fa-exclamation-triangle text-4xl mb-2"></i>
+                            <p>模型加载失败</p>
+                            <p class="text-sm mt-1">${error.message}</p>
+                        </div>
+                    `;
+                }
+            );
+        }
+        
+        // 显示模型信息
+        function showModelInfo(modelUrl, isLocal) {
+            const modelNameEl = document.getElementById('modelName');
+            const modelSizeEl = document.getElementById('modelSize');
+            const infoEl = document.getElementById('modelInfo');
+            
+            // 提取模型名称
+            const modelName = modelUrl.split('/').pop();
+            modelNameEl.textContent = modelName;
+            
+            // 显示大小（仅本地文件）
+            if (isLocal && uploadedFiles.has(modelName)) {
+                const file = uploadedFiles.get(modelName);
+                const fileSize = file.size < 1024 * 1024 
+                    ? (file.size / 1024).toFixed(1) + ' KB'
+                    : (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+                modelSizeEl.textContent = fileSize;
+            } else {
+                modelSizeEl.textContent = '远程模型';
+            }
+            
+            // 显示信息面板
+            infoEl.classList.remove('opacity-0');
+            infoEl.classList.add('opacity-100');
+        }
+        
+        // 隐藏模型信息
+        function hideModelInfo() {
+            const infoEl = document.getElementById('modelInfo');
+            infoEl.classList.remove('opacity-100');
+            infoEl.classList.add('opacity-0');
+        }
+        
+        // 调整模型大小和位置
+        function adjustModel(model) {
+            // 计算模型边界
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            
+            // 移动模型到原点
+            model.position.x = -center.x;
+            model.position.y = -center.y;
+            model.position.z = -center.z;
+            
+            // 计算模型最大尺寸
+            const maxDim = Math.max(size.x, size.y, size.z);
+            // 缩放模型以适应场景
+            const scale = 3 / maxDim;
+            model.scale.set(scale, scale, scale);
+        }
+        
+        // 窗口大小变化时调整渲染器和相机
+        function onWindowResize() {
+            const container = document.getElementById('modelCanvas');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // 动画循环
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // 如果启用了自动旋转，旋转模型
+            if (isAnimating && currentModel) {
+                currentModel.rotation.y += rotationSpeed;
+            }
+            
+            // 更新控制器
+            controls.update();
+            
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+        
+        // 处理文件上传
+        function handleFileUpload(files) {
+            uploadedFiles.clear();
+            const fileListEl = document.getElementById('fileList');
+            fileListEl.innerHTML = '';
+            
+            // 显示上传的文件列表
+            document.getElementById('uploadedFiles').classList.remove('hidden');
+            
+            let modelFile = null;
+            
+            // 存储所有文件
+            Array.from(files).forEach(file => {
+                // 使用完整路径作为键，处理相同文件名的情况
+                const filePath = file.webkitRelativePath || file.name;
+                uploadedFiles.set(filePath, file);
+                uploadedFiles.set(file.name, file); // 同时存储文件名映射
+                
+                // 添加到文件列表
+                const li = document.createElement('li');
+                li.className = 'py-1 border-b border-gray-100 last:border-0';
+                
+                // 确定文件图标
+                let fileIcon = 'fa-file-o';
+                if (file.name.endsWith('.gltf') || file.name.endsWith('.glb')) {
+                    fileIcon = 'fa-cube';
+                    if (!modelFile) modelFile = filePath; // 记录第一个模型文件
+                } else if (file.name.endsWith('.png') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg')) {
+                    fileIcon = 'fa-file-image-o';
+                } else if (file.name.endsWith('.bin')) {
+                    fileIcon = 'fa-file-binary-o';
+                }
+                
+                li.innerHTML = `
+                    <i class="fa ${fileIcon} mr-2 text-gray-400"></i>
+                    ${file.name} 
+                    <span class="text-xs text-gray-400 ml-2">${
+                        file.size < 1024 * 1024 
+                            ? (file.size / 1024).toFixed(1) + ' KB'
+                            : (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                    }</span>
+                `;
+                fileListEl.appendChild(li);
+            });
+            
+            // 如果找到模型文件，自动加载
+            if (modelFile) {
+                setTimeout(() => {
+                    loadModel(modelFile, true);
+                }, 500);
+            } else {
+                document.getElementById('modelLoader').innerHTML = `
+                    <div class="text-amber-500 text-center">
+                        <i class="fa fa-info-circle text-4xl mb-2"></i>
+                        <p>未找到模型文件</p>
+                        <p class="text-sm mt-1">请确保文件夹中包含.gltf或.glb格式的模型文件</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 初始化3D模型控制事件
+        function initModelControls() {
+            // 重置视图按钮
+            document.getElementById('resetView').addEventListener('click', function() {
+                controls.reset();
+                if (currentModel) {
+                    currentModel.rotation.set(0, 0, 0);
+                }
+                // 添加按钮动画效果
+                this.classList.add('scale-90');
+                setTimeout(() => this.classList.remove('scale-90'), 200);
+            });
+            
+            // 切换线框模式
+            document.getElementById('toggleWireframe').addEventListener('click', function() {
+                if (currentModel) {
+                    currentModel.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material.wireframe = !child.material.wireframe;
+                        }
+                    });
+                }
+                // 添加按钮动画效果
+                this.classList.add('scale-90');
+                setTimeout(() => this.classList.remove('scale-90'), 200);
+            });
+            
+            // 切换坐标轴显示
+            document.getElementById('toggleAxis').addEventListener('click', function() {
+                axisHelper.visible = !axisHelper.visible;
+                // 添加按钮动画效果
+                this.classList.add('scale-90');
+                setTimeout(() => this.classList.remove('scale-90'), 200);
+            });
+            
+            // 切换动画
+            const animationBtn = document.getElementById('toggleAnimation');
+            animationBtn.addEventListener('click', function() {
+                isAnimating = !isAnimating;
+                this.innerHTML = isAnimating ? 
+                    '<i class="fa fa-pause"></i>' : 
+                    '<i class="fa fa-play"></i>';
+                // 添加按钮动画效果
+                this.classList.add('scale-90');
+                setTimeout(() => this.classList.remove('scale-90'), 200);
+            });
+            
+            // 模型选择器
+            document.getElementById('modelSelector').addEventListener('change', (e) => {
+                loadModel(e.target.value);
+            });
+            
+            // 背景颜色选择器
+            document.getElementById('bgColorPicker').addEventListener('input', (e) => {
+                scene.background = new THREE.Color(e.target.value);
+            });
+            
+            // 模型颜色选择器
+            document.getElementById('modelColorPicker').addEventListener('input', (e) => {
+                if (currentModel) {
+                    const color = new THREE.Color(e.target.value);
+                    currentModel.traverse((child) => {
+                        if (child.isMesh) {
+                            // 保存原始材质类型以便恢复
+                            if (!child.userData.originalMaterialType) {
+                                child.userData.originalMaterialType = child.material.type;
+                            }
+                            // 如果是基础材质，直接修改颜色
+                            if (child.material.type === 'MeshBasicMaterial') {
+                                child.material.color = color;
+                            } else {
+                                // 对于其他材质，创建新的基础材质以确保颜色可见
+                                child.material = new THREE.MeshBasicMaterial({
+                                    color: color,
+                                    wireframe: child.material.wireframe
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+            
+            // 旋转速度控制
+            const rotationSlider = document.getElementById('rotationSpeed');
+            const rotationValue = document.getElementById('rotationSpeedValue');
+            
+            rotationSlider.addEventListener('input', (e) => {
+                rotationSpeed = parseFloat(e.target.value);
+                rotationValue.textContent = rotationSpeed.toFixed(3);
+                
+                // 如果旋转速度大于0，自动开启动画
+                if (rotationSpeed > 0 && !isAnimating) {
+                    isAnimating = true;
+                    document.getElementById('toggleAnimation').innerHTML = '<i class="fa fa-pause"></i>';
+                }
+            });
+            
+            // 文件上传处理
+            const modelUpload = document.getElementById('modelUpload');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            modelUpload.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileUpload(e.target.files);
+                    uploadArea.classList.add('border-primary');
+                    uploadArea.classList.add('bg-primary/5');
+                    setTimeout(() => {
+                        uploadArea.classList.remove('border-primary');
+                    }, 1000);
+                }
+            });
+            
+            // 拖拽上传效果
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadArea.classList.add('border-primary');
+                uploadArea.classList.add('bg-primary/10');
+            }
+            
+            function unhighlight() {
+                uploadArea.classList.remove('border-primary');
+                uploadArea.classList.remove('bg-primary/10');
+            }
+            
+            uploadArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    handleFileUpload(files);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
