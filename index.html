@@ -3,21 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI工具平台</title>
-    <!-- 引入Bootstrap样式 -->
+    <title>“妙文生花”</title>
+    <!-- 引入外部资源 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Font Awesome（图标库） -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- Three.js 核心库 -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <!-- 模型交互控制器（OrbitControls） -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- 3D 模型加载器（GLTFLoader） -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入自定义CSS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
     <style>
         /* 全局样式 */
         * {
@@ -30,63 +23,43 @@
         body {
             background-color: #f5f7fa;
             padding: 20px;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(52, 152, 219, 0.05) 0%, transparent 20%);
-            background-attachment: fixed;
         }
 
         /* 导航区样式 */
         .nav-container {
-            max-width: 1000px;
-            margin: 50px auto;
+            max-width: 1400px;
+            margin: 0 auto;
             text-align: center;
-            padding: 30px;
         }
 
         .nav-title {
             color: #2c3e50;
-            font-size: 28px;
-            margin-bottom: 50px;
-            position: relative;
-            display: inline-block;
-            padding-bottom: 15px;
+            margin-bottom: 60px;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .nav-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background-color: #3498db;
-            border-radius: 2px;
-            transition: width 0.3s ease;
-        }
-
-        .nav-title:hover::after {
-            width: 120px;
-        }
-
-        .function-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        .function-container {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
             gap: 40px;
-            justify-items: center;
+            margin: 0 auto;
+            max-width: 1200px;
         }
 
         .function-item {
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
             width: 100%;
-            max-width: 220px;
+            max-width: 280px;
+            cursor: pointer;
         }
 
         .function-item:hover {
             transform: translateY(-10px) scale(1.03);
+            transition: all 0.3s ease;
         }
 
         .function-card {
@@ -103,7 +76,7 @@
 
         .function-img-container {
             position: relative;
-            height: 160px;
+            height: 180px;
             overflow: hidden;
         }
 
@@ -136,11 +109,12 @@
         }
 
         .function-name {
-            padding: 20px 15px;
+            padding: 20px 15px 10px;
             color: #34495e;
             font-size: 18px;
             font-weight: 500;
             transition: color 0.3s ease;
+            text-align: center;
         }
 
         .function-item:hover .function-name {
@@ -151,22 +125,34 @@
             font-size: 14px;
             color: #7f8c8d;
             padding: 0 15px 20px;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-            height: 0;
-            overflow: hidden;
+            line-height: 1.5;
+            text-align: center;
+            margin: 0;
         }
 
-        .function-item:hover .function-desc {
+        .arrow {
+            font-size: 3rem;
+            color: #3498db;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+            align-self: center;
+        }
+
+        .arrow:hover {
             opacity: 1;
-            transform: translateY(0);
-            height: auto;
+            transform: scale(1.1);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         /* 文生图功能区样式 */
         .text2img-container {
-            display: none; /* 初始隐藏 */
+            display: none;
             max-width: 1200px;
             margin: 0 auto;
             background: white;
@@ -178,14 +164,260 @@
 
         /* 3D模型查看器功能区 */
         .model-viewer-container {
-            display: none; /* 初始隐藏 */
-            max-width: 1200px;
+            display: none;
+            max-width: 1400px;
             margin: 0 auto;
-            background: white;
-            padding: 30px;
+            background: rgba(0, 0, 0, 0.7);
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             animation: fadeIn 0.5s ease;
+        }
+
+        .ceshi-header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .ceshi-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .ceshi-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            color: white;
+        }
+        
+        .ceshi-content {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 180px);
+        }
+        
+        @media (min-width: 992px) {
+            .ceshi-content {
+                flex-direction: row;
+            }
+        }
+        
+        .ceshi-sidebar {
+            width: 100%;
+            background: rgba(20, 20, 30, 0.8);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        @media (min-width: 992px) {
+            .ceshi-sidebar {
+                width: 300px;
+                min-width: 300px;
+            }
+        }
+        
+        .ceshi-viewer-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+        
+        #ceshi-model-viewer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .ceshi-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        
+        .ceshi-control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ceshi-control-btn:hover {
+            background: rgba(50, 50, 150, 0.7);
+            transform: scale(1.1);
+        }
+        
+        .ceshi-folder-selector {
+            margin-bottom: 20px;
+        }
+        
+        .ceshi-folder-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .ceshi-folder-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .ceshi-image-upload {
+            margin-bottom: 20px;
+        }
+        
+        .ceshi-image-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .ceshi-image-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .ceshi-model-list {
+            margin-top: 20px;
+        }
+        
+        .ceshi-model-item {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ceshi-model-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .ceshi-model-item.active {
+            background: rgba(74, 144, 226, 0.5);
+            border-left: 4px solid #4a90e2;
+        }
+        
+        .ceshi-model-icon {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .ceshi-model-info {
+            flex: 1;
+        }
+        
+        .ceshi-model-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: white;
+        }
+        
+        .ceshi-model-type {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            color: white;
+        }
+        
+        .ceshi-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .ceshi-spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #4a90e2;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .ceshi-no-models {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+            color: white;
+        }
+        
+        .ceshi-info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 300px;
+            display: none;
+            color: white;
+            z-index: 10;
+        }
+        
+        .ceshi-info-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4a90e2;
+        }
+        
+        .ceshi-close-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        
+        .ceshi-footer {
+            padding: 15px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.5);
+            font-size: 0.9rem;
+            opacity: 0.7;
+            color: white;
         }
 
         @keyframes fadeIn {
@@ -193,7 +425,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .text2img-title, .model-viewer-title {
+        .text2img-title {
             color: #2c3e50;
             font-size: 24px;
             margin-bottom: 20px;
@@ -203,7 +435,7 @@
             display: inline-block;
         }
 
-        .text2img-title::after, .model-viewer-title::after {
+        .text2img-title:hover::after {
             content: '';
             position: absolute;
             width: 0;
@@ -212,13 +444,9 @@
             left: 0;
             background-color: #2980b9;
             transition: width 0.3s ease;
-        }
-
-        .text2img-title:hover::after, .model-viewer-title:hover::after {
             width: 100%;
         }
 
-        /* 新增：画廊布局和表单样式 */
         .gallery {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -256,12 +484,6 @@
             color: #7f8c8d !important;
         }
 
-        /* 加载动画 */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         .loading {
             display: none;
             border: 5px solid rgba(52, 152, 219, 0.1);
@@ -273,94 +495,131 @@
             margin: 20px auto;
         }
 
-        /* 抖动动画 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
             20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
 
-        /* 3D模型查看器样式 */
-        .model-container {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            border-radius: 0.75rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            transition: all 500ms ease;
-            height: calc(100vh - 14rem);
-            min-height: 400px;
-        }
-        .control-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 3rem;
-            height: 3rem;
-            border-radius: 9999px;
-            background-color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 300ms ease;
-        }
-        .control-btn:hover {
-            background-color: #165DFF;
+        .back-btn {
+            margin-top: 20px;
+            background-color: #95a5a6;
+            border-color: #95a5a6;
             color: white;
+        }
+        
+        .back-btn:hover {
+            background-color: #7f8c8d;
+            border-color: #7f8c8d;
+            color: white;
+        }
+
+        /* 语义分割结果页面样式 */
+        .segmentation-container {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        
+        .images-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .image-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 320px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .image-card:hover {
             transform: scale(1.05);
         }
-        .control-btn:active {
-            transform: scale(0.95);
+        
+        .seg-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
         }
-        .control-panel {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: all 300ms ease;
-        }
-        .control-panel:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .upload-area {
-            border: 2px dashed #d1d5db;
-            border-radius: 0.5rem;
-            padding: 2rem;
+
+        /* 新增：图片详情页样式 */
+        .image-detail-container {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
             text-align: center;
-            transition: all 300ms ease;
         }
-        .upload-area:hover {
-            border-color: #165DFF;
-            background-color: rgba(22, 93, 255, 0.05);
+        
+        .detail-image-container {
+            margin: 30px auto;
+            max-width: 800px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
         }
-        .glass-effect {
-            background-color: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
+        
+        .detail-image {
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 5px;
         }
-    </style>
-    <script>
-        // 配置Tailwind自定义颜色
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#165DFF',
-                        secondary: '#36BFFA',
-                        dark: '#1D2939',
-                        light: '#F9FAFB',
-                        accent: '#7C3AED'
-                    },
-                    fontFamily: {
-                        inter: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
+
+        /* Yuyi页面样式 */
+        .yuyi-container {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @media (max-width: 992px) {
+            .function-container {
+                flex-direction: column;
+                gap: 30px;
+                align-items: center;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+
+            .function-item {
+                max-width: 320px;
             }
         }
-    </script>
+    </style>
 </head>
 <body>
     <!-- 导航区（默认显示） -->
     <div class="nav-container" id="navArea">
-        <h1 class="nav-title">AI工具导航</h1>
-        <div class="function-grid">
+        <h1 class="nav-title">“妙文生花”</h1>
+        <div class="function-container">
             <!-- 文生图图片按钮 -->
             <div class="function-item" onclick="showText2Img()">
                 <div class="function-card">
@@ -369,8 +628,12 @@
                         <div class="function-overlay"></div>
                     </div>
                     <p class="function-name">文生图</p>
-                    <p class="function-desc">根据文字描述生成对应图片</p>
+                    <p class="function-desc">以 “用户输入” 为起点，分为两条并行分支 —— 一条是文本分支，依次经 “文本处理”“CLIP 编码”；另一条是边缘图分支，依次经 “边缘图输入”“Canny 检测”“边缘提取”。两条分支的结果共同输入 “Janus-Pro 生成” 环节，再经 “权重融合”“后处理”，最终实现 “输出展示”。</p>
                 </div>
+            </div>
+
+            <div class="arrow">
+                <i class="fa fa-long-arrow-right"></i>
             </div>
 
             <!-- 图生3D功能 -->
@@ -381,19 +644,23 @@
                         <div class="function-overlay"></div>
                     </div>
                     <p class="function-name">图生3D</p>
-                    <p class="function-desc">将2D图片转换为3D模型</p>
+                    <p class="function-desc">以 “输入层” 为起始点，先进入 “图像预处理层” 对输入内容开展前期处理；随后传递至 “3D 形状生成层” 以生成 3D 形状相关结果；接着经由 “模型后处理层” 对生成的 3D 模型进行后续优化等操作；最终通过 “输出层” 完成结果的输出。</p>
                 </div>
             </div>
 
+            <div class="arrow">
+                <i class="fa fa-long-arrow-right"></i>
+            </div>
+
             <!-- 语义分割功能 -->
-            <div class="function-item">
+            <div class="function-item" onclick="showSemanticSegmentation()">
                 <div class="function-card">
                     <div class="function-img-container">
                         <img src="语义分割.png" class="function-img" alt="语义分割">
                         <div class="function-overlay"></div>
                     </div>
                     <p class="function-name">语义分割</p>
-                    <p class="function-desc">对图像进行像素级语义分类</p>
+                    <p class="function-desc">以 “输入层” 接收优化后的 3D 网格模型为起点，进入 “特征提取层” 渲染多视角 2D 图像；随后通过 “分割执行层” 采用二维映射分割方案（基于 SAM、CLIPSeg 模型）完成部件拆分；再经 “后处理层” 修正分割边界、统一语义标签；最终通过 “输出展示层” 借助 Three.js 实现分割结果的交互式展示。</p>
                 </div>
             </div>
         </div>
@@ -444,7 +711,6 @@
             <div class="row slider-group">
                 <div class="col-md-4">
                     <label class="form-label">Canny控制图像（可选）</label>
-                    <!-- 图像上传和预览 -->
                     <div class="card">
                         <div class="card-body text-center p-3" style="height: 180px; display: flex; align-items: center; justify-content: center;">
                             <img id="cannyPreview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23dee2e6' viewBox='0 0 16 16'%3E%3Cpath d='M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z'/%3E%3C/svg%3E" 
@@ -497,119 +763,135 @@
 
             <div class="loading" id="loadingIndicator"></div>
             
-            <!-- 返回导航区按钮 -->
             <button class="back-btn btn btn-secondary" onclick="showNav()">返回工具导航</button>
         </div>
     </div>
 
     <!-- 3D模型查看器功能区 -->
     <div class="model-viewer-container" id="modelViewerArea">
-        <h2 class="model-viewer-title">3D模型交互查看器</h2>
-        <p class="text-muted mb-6">使用鼠标与3D模型交互：拖动旋转，滚轮缩放，按住Shift键平移</p>
+        <header class="ceshi-header">
+            <h1>图生3D模型展示</h1>
+            <p class="ceshi-subtitle">选择包含3D模型的文件夹，浏览并交互式查看模型</p>
+        </header>
         
-        <!-- 3D模型渲染区域 -->
-        <div class="model-container bg-gray-100 mb-6">
-            <canvas id="modelCanvas" class="w-full h-full"></canvas>
-            
-            <!-- 加载指示器 -->
-            <div id="modelLoader" class="absolute inset-0 flex items-center justify-center glass-effect z-10">
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <p class="text-primary font-medium">加载模型中...</p>
-                </div>
-            </div>
-            
-            <!-- 模型信息浮层 -->
-            <div id="modelInfo" class="absolute top-4 left-4 glass-effect px-4 py-2 rounded-lg shadow-md opacity-0 transition-opacity duration-300">
-                <p id="modelName" class="font-medium"></p>
-                <p id="modelSize" class="text-sm text-gray-500"></p>
-            </div>
-        </div>
-        
-        <!-- 控制面板 -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- 左侧控制按钮 -->
-            <div class="lg:col-span-1 control-panel">
-                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                    <i class="fa fa-sliders mr-2 text-primary"></i>模型控制
-                </h2>
-                
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                    <button id="resetView" class="control-btn" title="重置视图">
-                        <i class="fa fa-refresh"></i>
-                    </button>
-                    <button id="toggleWireframe" class="control-btn" title="线框模式">
-                        <i class="fa fa-th-large"></i>
-                    </button>
-                    <button id="toggleAxis" class="control-btn" title="显示坐标轴">
-                        <i class="fa fa-arrows"></i>
-                    </button>
-                    <button id="toggleAnimation" class="control-btn" title="播放/暂停动画">
-                        <i class="fa fa-play"></i>
-                    </button>
+        <div class="ceshi-content">
+            <div class="ceshi-sidebar">
+                <div class="ceshi-folder-selector">
+                    <button class="ceshi-folder-btn" id="folder-btn">选择3D模型文件夹</button>
+                    <input type="file" id="folder-input" webkitdirectory directory multiple style="display: none;">
                 </div>
                 
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">背景颜色</label>
-                        <input type="color" id="bgColorPicker" value="#f3f4f6" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer transition-transform duration-200 hover:scale-[1.02]">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">模型颜色</label>
-                        <input type="color" id="modelColorPicker" value="#165DFF" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer transition-transform duration-200 hover:scale-[1.02]">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            旋转速度 
-                            <span id="rotationSpeedValue" class="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded">0</span>
-                        </label>
-                        <input type="range" id="rotationSpeed" min="0" max="0.1" step="0.001" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                <div class="ceshi-image-upload">
+                    <button class="ceshi-image-btn" id="image-upload-btn">上传图片模式</button>
+                    <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="ceshi-loading" id="loading">
+                    <div class="ceshi-spinner"></div>
+                    <p>扫描文件夹中...</p>
+                </div>
+                
+                <div class="ceshi-model-list" id="model-list">
+                    <div class="ceshi-no-models" id="no-models">
+                        请选择一个包含3D模型的文件夹
                     </div>
                 </div>
             </div>
             
-            <!-- 右侧模型选择和上传 -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- 预设模型选择 -->
-                <div class="control-panel">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center">
-                        <i class="fa fa-cube mr-2 text-primary"></i>预设模型
-                    </h2>
-                    
-                    <select id="modelSelector" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200">
-                        <option value="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf">破损头盔</option>
-                        <option value="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/FlightHelmet/glTF/FlightHelmet.gltf">飞行头盔</option>
-                        <option value="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/LittlestTokyo/glTF/LittlestTokyo.gltf">东京街景</option>
-                    </select>
+            <div class="ceshi-viewer-container">
+                <div id="ceshi-model-viewer"></div>
+                
+                <div class="ceshi-controls">
+                    <button class="ceshi-control-btn" id="reset-view" title="重置视图">↺</button>
+                    <button class="ceshi-control-btn" id="toggle-rotate" title="自动旋转">⟳</button>
+                    <button class="ceshi-control-btn" id="model-info" title="模型信息">ℹ</button>
                 </div>
                 
-                <!-- 本地模型上传 -->
-                <div class="control-panel">
-                    <h2 class="text-xl font-semibold mb-4 flex items-center">
-                        <i class="fa fa-upload mr-2 text-primary"></i>上传本地模型
-                    </h2>
-                    
-                    <div class="upload-area" id="uploadArea">
-                        <input type="file" id="modelUpload" class="hidden" accept=".gltf,.glb" multiple directory webkitdirectory mozdirectory>
-                        <label for="modelUpload" class="cursor-pointer">
-                            <i class="fa fa-folder-open text-4xl text-gray-400 mb-3 transition-colors duration-300 hover:text-primary"></i>
-                            <p class="text-gray-600 mb-1">点击或拖拽文件夹到此处</p>
-                            <p class="text-xs text-gray-400">支持 .gltf, .glb 格式模型及相关资源文件</p>
-                        </label>
-                    </div>
-                    
-                    <div id="uploadedFiles" class="mt-4 hidden">
-                        <h3 class="font-medium mb-2 text-sm text-gray-700">已上传文件:</h3>
-                        <ul id="fileList" class="text-sm text-gray-600 max-h-32 overflow-y-auto"></ul>
+                <div class="ceshi-info-panel" id="info-panel">
+                    <button class="ceshi-close-info" id="close-info">×</button>
+                    <div class="ceshi-info-title">模型信息</div>
+                    <div id="model-details">
+                        选择模型查看详细信息
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- 返回导航区按钮 -->
-        <button class="back-btn btn btn-secondary mt-8" onclick="showNav()">返回工具导航</button>
+        <footer class="ceshi-footer">
+            <p>支持格式: OBJ, GLTF, GLB | 使用Three.js渲染引擎</p>
+        </footer>
+        
+        <button class="back-btn btn btn-secondary" style="margin: 20px auto; display: block;" onclick="showNav()">返回工具导航</button>
+    </div>
+
+    <!-- 语义分割结果展示区 -->
+    <div class="segmentation-container" id="segmentationArea">
+        <h1 class="page-title">语义分割结果展示</h1>
+        <div class="images-grid">
+            <!-- 语义分割结果图片 -->
+            <div class="image-card" onclick="showImageDetail('front.png', '正面视图')">
+                <img src="front.png" alt="正面视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('front_left.png', '左前视图')">
+                <img src="front_left.png" alt="左前视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('front_right.png', '右前视图')">
+                <img src="front_right.png" alt="右前视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('low_front.png', '前低视图')">
+                <img src="low_front.png" alt="前低视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('top_front.png', '前顶视图')">
+                <img src="top_front.png" alt="前顶视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('back.png', '后视图')">
+                <img src="back.png" alt="后视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('back_left.png', '左后视图')">
+                <img src="back_left.png" alt="左后视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('back_right.png', '右后视图')">
+                <img src="back_right.png" alt="右后视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('top_back.png', '后顶视图')">
+                <img src="top_back.png" alt="后顶视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('left.png', '左视图')">
+                <img src="left.png" alt="左视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('right.png', '右视图')">
+                <img src="right.png" alt="右视图" class="seg-image">
+            </div>
+            <div class="image-card" onclick="showImageDetail('low_left.png', '左下视图')">
+                <img src="low_left.png" alt="左下视图" class="seg-image">
+            </div>
+        </div>
+        
+        <button class="back-btn btn btn-secondary" style="margin: 20px auto; display: block;" onclick="showNav()">返回工具导航</button>
+    </div>
+
+    <!-- 新增：图片详情页 -->
+    <div class="image-detail-container" id="imageDetailArea">
+        <h1 class="page-title">语义分割图片详情</h1>
+        <h3 id="detailImageTitle" class="mb-4"></h3>
+        <div class="detail-image-container">
+            <img id="detailImage" class="detail-image" src="" alt="">
+        </div>
+        <div class="mt-4">
+            <button class="back-btn btn btn-secondary me-2" onclick="showSemanticSegmentation()">返回图片列表</button>
+            <button class="btn btn-primary" onclick="saveCurrentImage()">保存图片</button>
+        </div>
+    </div>
+
+    <!-- Yuyi页面 -->
+    <div class="yuyi-container" id="yuyiArea">
+        <h1 class="page-title">Yuyi 功能页面</h1>
+        <div style="text-align: center; padding: 50px; background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+            <p style="font-size: 1.2rem; margin-bottom: 30px;">这是Yuyi功能的主页面。</p>
+            <p style="color: #666;">可以在这里添加Yuyi相关的功能和内容</p>
+        </div>
+        
+        <button class="back-btn btn btn-secondary" style="margin: 20px auto; display: block;" onclick="showSemanticSegmentation()">返回语义分割</button>
     </div>
 
     <script>
@@ -617,21 +899,26 @@
         const navArea = document.getElementById('navArea');
         const text2ImgArea = document.getElementById('text2ImgArea');
         const modelViewerArea = document.getElementById('modelViewerArea');
+        const segmentationArea = document.getElementById('segmentationArea');
+        const imageDetailArea = document.getElementById('imageDetailArea');
+        const yuyiArea = document.getElementById('yuyiArea');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const imageGallery = document.getElementById('imageGallery');
         const statusEl = document.getElementById('statusMsg');
 
-        // 全局变量：存储Canny图像的Base64编码
-        let cannyImageBase64 = null;
+        // 全局变量：存储当前查看的图片信息
+        let currentImageSrc = '';
+        let currentImageTitle = '';
 
-        // 显示文生图功能区，隐藏导航区
+        // 显示文生图功能区
         function showText2Img() {
             navArea.style.display = 'none';
             modelViewerArea.style.display = 'none';
+            segmentationArea.style.display = 'none';
+            imageDetailArea.style.display = 'none';
+            yuyiArea.style.display = 'none';
             text2ImgArea.style.display = 'block';
-            // 初始化滑块监听
             initSliderListeners();
-            // 添加进入动画
             text2ImgArea.style.opacity = '0';
             setTimeout(() => {
                 text2ImgArea.style.transition = 'opacity 0.5s ease';
@@ -639,45 +926,115 @@
             }, 10);
         }
 
-        // 显示3D模型查看器，隐藏导航区
+        // 显示3D模型查看器
         function showModelViewer() {
             navArea.style.display = 'none';
             text2ImgArea.style.display = 'none';
+            segmentationArea.style.display = 'none';
+            imageDetailArea.style.display = 'none';
+            yuyiArea.style.display = 'none';
             modelViewerArea.style.display = 'block';
-            // 添加进入动画
             modelViewerArea.style.opacity = '0';
             setTimeout(() => {
                 modelViewerArea.style.transition = 'opacity 0.5s ease';
                 modelViewerArea.style.opacity = '1';
-                // 初始化3D场景
-                initScene();
+                if (!window.ceshiSceneInitialized) {
+                    initCeshiScene();
+                    initCeshiEvents();
+                    window.ceshiSceneInitialized = true;
+                }
             }, 10);
         }
 
-        // 显示导航区，隐藏其他功能区
+        // 显示语义分割结果
+        function showSemanticSegmentation() {
+            navArea.style.display = 'none';
+            text2ImgArea.style.display = 'none';
+            modelViewerArea.style.display = 'none';
+            imageDetailArea.style.display = 'none';
+            yuyiArea.style.display = 'none';
+            segmentationArea.style.display = 'block';
+            segmentationArea.style.opacity = '0';
+            setTimeout(() => {
+                segmentationArea.style.transition = 'opacity 0.5s ease';
+                segmentationArea.style.opacity = '1';
+            }, 10);
+        }
+
+        // 新增：显示图片详情页
+        function showImageDetail(imageSrc, imageTitle) {
+            // 保存当前图片信息
+            currentImageSrc = imageSrc;
+            currentImageTitle = imageTitle;
+            
+            // 更新详情页内容
+            document.getElementById('detailImage').src = imageSrc;
+            document.getElementById('detailImageTitle').textContent = imageTitle;
+            
+            // 显示详情页，隐藏列表页
+            segmentationArea.style.display = 'none';
+            imageDetailArea.style.display = 'block';
+            imageDetailArea.style.opacity = '0';
+            setTimeout(() => {
+                imageDetailArea.style.transition = 'opacity 0.5s ease';
+                imageDetailArea.style.opacity = '1';
+            }, 10);
+        }
+
+        // 新增：保存当前查看的图片
+        function saveCurrentImage() {
+            if (!currentImageSrc) return;
+            
+            const a = document.createElement('a');
+            a.href = currentImageSrc;
+            const timestamp = new Date().toISOString().replace(/[-:\.T]/g, '').slice(0, 14);
+            a.download = `segmentation-${timestamp}-${currentImageTitle}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            alert(`已保存图片: ${currentImageTitle}`);
+        }
+
+        // 显示Yuyi页面
+        function showYuyiPage() {
+            segmentationArea.style.display = 'none';
+            imageDetailArea.style.display = 'none';
+            yuyiArea.style.display = 'block';
+            yuyiArea.style.opacity = '0';
+            setTimeout(() => {
+                yuyiArea.style.transition = 'opacity 0.5s ease';
+                yuyiArea.style.opacity = '1';
+            }, 10);
+        }
+
+        // 显示导航区
         function showNav() {
-            // 为当前显示的区域添加淡出动画
             if (text2ImgArea.style.display === 'block') {
                 text2ImgArea.style.opacity = '0';
             } else if (modelViewerArea.style.display === 'block') {
                 modelViewerArea.style.opacity = '0';
-                // 停止3D渲染循环
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
-                }
+            } else if (segmentationArea.style.display === 'block') {
+                segmentationArea.style.opacity = '0';
+            } else if (imageDetailArea.style.display === 'block') {
+                imageDetailArea.style.opacity = '0';
+            } else if (yuyiArea.style.display === 'block') {
+                yuyiArea.style.opacity = '0';
             }
             
             setTimeout(() => {
                 text2ImgArea.style.display = 'none';
                 modelViewerArea.style.display = 'none';
+                segmentationArea.style.display = 'none';
+                imageDetailArea.style.display = 'none';
+                yuyiArea.style.display = 'none';
                 navArea.style.display = 'block';
-                // 重置结果区域
                 clearInputs();
                 loadingIndicator.style.display = 'none';
             }, 300);
         }
 
-        // 1. 滑块值实时显示
+        // 滑块值实时显示
         function initSliderListeners() {
             const sliders = [
                 { id: 'cfgWeight', valueId: 'cfgWeightValue', formatter: (v) => `当前值：${v}` },
@@ -692,7 +1049,6 @@
                 const valueEl = document.getElementById(valueId);
                 slider.addEventListener('input', () => {
                     valueEl.textContent = formatter(slider.value);
-                    // 特殊处理：Canny低阈值变化时，确保高阈值 > 低阈值
                     if (id === 'cannyLow') {
                         const cannyHigh = document.getElementById('cannyHigh');
                         if (parseInt(slider.value) >= parseInt(cannyHigh.value)) {
@@ -704,26 +1060,24 @@
             });
         }
 
-        // 2. Canny图像预览与Base64转换
+        // Canny图像预览与Base64转换
+        let cannyImageBase64 = null;
         function previewCannyImage(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
             reader.onload = (e) => {
-                // 显示预览
                 document.getElementById('cannyPreview').src = e.target.result;
-                // 保存Base64（后续传给后端）
                 cannyImageBase64 = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // 3. 显示加载状态并执行生成逻辑
+        // 显示加载状态并执行生成逻辑
         function showLoading() {
             const promptInput = document.getElementById('promptInput');
             if (!promptInput.value.trim()) {
-                // 输入框抖动效果
                 promptInput.style.animation = 'none';
                 setTimeout(() => {
                     promptInput.style.animation = 'shake 0.5s ease';
@@ -735,42 +1089,38 @@
             imageGallery.innerHTML = '<p class="text-center w-100">正在生成图片，请稍候...</p>';
             statusEl.value = '正在生成图像，请稍候...';
             
-            // 执行生成逻辑
             generateImage();
         }
 
-        // 4. 生成图像核心逻辑（调用后端API）
+        // 生成图像核心逻辑
         async function generateImage() {
             const prompt = document.getElementById('promptInput').value.trim();
 
-            // 收集参数
             const params = {
                 prompt: prompt,
-                seed: document.getElementById('seedInput').value || null, // 空字符串转null
+                seed: document.getElementById('seedInput').value || null,
                 cfg_weight: parseFloat(document.getElementById('cfgWeight').value),
                 temperature: parseFloat(document.getElementById('temperature').value),
                 canny_low: parseInt(document.getElementById('cannyLow').value),
                 canny_high: parseInt(document.getElementById('cannyHigh').value),
                 parallel_size: parseInt(document.getElementById('parallelSize').value),
-                canny_image: cannyImageBase64 // 可为null（未上传时）
+                canny_image: cannyImageBase64
             };
 
             try {
-                // 调用后端API（需替换为实际后端地址）
                 const response = await fetch('http://127.0.0.1:8000/generate-image', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(params),
-                    mode: 'cors' // 允许跨域（开发环境）
+                    mode: 'cors'
                 });
 
                 if (!response.ok) throw new Error(`HTTP错误：${response.status}`);
                 const data = await response.json();
 
                 if (data.success && data.images.length > 0) {
-                    // 显示生成的图片
                     imageGallery.innerHTML = '';
                     data.images.forEach((imgBase64, index) => {
                         const imgEl = document.createElement('img');
@@ -785,7 +1135,6 @@
                 }
             } catch (error) {
                 statusEl.value = `生成失败：${error.message}`;
-                // 显示错误提示图
                 imageGallery.innerHTML = '';
                 const errorImg = document.createElement('img');
                 errorImg.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="256" height="256" fill="%23dc3545" viewBox="0 0 16 16"%3E%3Cpath d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/%3E%3Cpath d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/%3E%3C/svg%3E';
@@ -797,12 +1146,11 @@
             }
         }
 
-        // 5. 清除所有输入
+        // 清除所有输入
         function clearInputs() {
-            // 重置文本框
             document.getElementById('promptInput').value = '';
             document.getElementById('seedInput').value = '';
-            // 重置滑块（恢复默认值）
+            
             const defaultValues = {
                 cfgWeight: 5,
                 temperature: 1.0,
@@ -815,17 +1163,17 @@
                 slider.value = val;
                 document.getElementById(`${id}Value`).textContent = `当前值：${val}`;
             });
-            // 重置Canny图像
+            
             const defaultPreview = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="%23dee2e6" viewBox="0 0 16 16"%3E%3Cpath d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z"/%3E%3C/svg%3E';
             document.getElementById('cannyPreview').src = defaultPreview;
             document.getElementById('cannyImageInput').value = '';
             cannyImageBase64 = null;
-            // 清空画廊和状态
+            
             imageGallery.innerHTML = '';
             statusEl.value = '就绪';
         }
 
-        // 6. 保存所有生成的图像
+        // 保存所有生成的图像
         function saveAllImages() {
             const imgs = imageGallery.querySelectorAll('img');
             if (imgs.length === 0) {
@@ -833,14 +1181,11 @@
                 return;
             }
 
-            // 生成时间戳（避免文件名重复）
             const timestamp = new Date().toISOString().replace(/[-:\.T]/g, '').slice(0, 14);
             imgs.forEach((img, index) => {
-                // 创建下载链接
                 const a = document.createElement('a');
                 a.href = img.src;
                 a.download = `ai-generated-${timestamp}-${index + 1}.png`;
-                // 触发下载
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -849,467 +1194,279 @@
             statusEl.value = `已保存${imgs.length}张图像`;
         }
 
-        // 3D模型查看器相关变量和函数
-        let scene, camera, renderer, controls, currentModel, axisHelper, animationId;
-        let isAnimating = false;
-        let rotationSpeed = 0;
-        let uploadedFiles = new Map(); // 存储上传的文件，用于处理相对路径
+        // 3D模型查看器代码
+        let scene, camera, renderer, controls;
+        let currentModel = null;
+        let autoRotate = false;
+        let models = [];
         
-        // 初始化3D场景
-        function initScene() {
-            // 如果已经初始化过，先清理
-            if (scene) {
-                // 清除之前的场景
-                while (scene.children.length > 0) {
-                    scene.remove(scene.children[0]);
-                }
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
-                }
-            }
-            
-            // 创建场景
+        function initCeshiScene() {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf3f4f6);
+            scene.background = new THREE.Color(0x1a1a2e);
             
-            // 创建相机
-            camera = new THREE.PerspectiveCamera(
-                75, 
-                document.getElementById('modelCanvas').clientWidth / document.getElementById('modelCanvas').clientHeight, 
-                0.1, 
-                1000
-            );
+            const viewer = document.getElementById('ceshi-model-viewer');
+            camera = new THREE.PerspectiveCamera(75, viewer.clientWidth / viewer.clientHeight, 0.1, 1000);
             camera.position.z = 5;
             
-            // 创建渲染器
-            renderer = new THREE.WebGLRenderer({
-                canvas: document.getElementById('modelCanvas'),
-                antialias: true,
-                alpha: true
-            });
-            renderer.setSize(
-                document.getElementById('modelCanvas').clientWidth, 
-                document.getElementById('modelCanvas').clientHeight
-            );
-            renderer.shadowMap.enabled = true;
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(viewer.clientWidth, viewer.clientHeight);
+            document.getElementById('ceshi-model-viewer').appendChild(renderer.domElement);
             
-            // 添加环境光
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
             
-            // 添加方向光（带阴影）
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(5, 5, 5);
-            directionalLight.castShadow = true;
             scene.add(directionalLight);
             
-            // 配置阴影属性
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 500;
-            
-            // 添加辅助坐标轴
-            axisHelper = new THREE.AxesHelper(5);
-            scene.add(axisHelper);
-            
-            // 添加网格辅助线
-            const gridHelper = new THREE.GridHelper(10, 10);
-            scene.add(gridHelper);
-            
-            // 添加控制器
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.1;
-            controls.enablePan = true;
-            controls.enableZoom = true;
+            controls.autoRotate = false;
             
-            // 初始加载模型
-            loadModel(document.getElementById('modelSelector').value);
+            window.addEventListener('resize', onCeshiWindowResize);
             
-            // 处理窗口大小变化
-            window.addEventListener('resize', onWindowResize);
-            
-            // 初始化控制事件
-            initModelControls();
-            
-            // 开始动画循环
+            function animate() {
+                requestAnimationFrame(animate);
+                if (autoRotate) {
+                    scene.rotation.y += 0.005;
+                }
+                controls.update();
+                renderer.render(scene, camera);
+            }
             animate();
         }
         
-        // 加载3D模型
-        function loadModel(modelUrl, isLocal = false) {
-            // 显示加载指示器
-            document.getElementById('modelLoader').style.display = 'flex';
-            hideModelInfo();
-            
-            // 移除当前模型
-            if (currentModel) {
-                scene.remove(currentModel);
-                currentModel = null;
-            }
-            
-            // 创建GLTF加载器
-            const loader = new THREE.GLTFLoader();
-            
-            // 如果是本地文件，配置加载器处理相对路径
-            if (isLocal) {
-                // 创建自定义资源管理器
-                loader.setResourcePath('');
-                loader.setLoaderMiddleware((url, loader) => {
-                    const file = uploadedFiles.get(url);
-                    if (file) {
-                        return new Promise((resolve, reject) => {
-                            const reader = new FileReader();
-                            
-                            // 根据文件类型选择读取方式
-                            if (url.endsWith('.glb') || url.endsWith('.bin')) {
-                                reader.readAsArrayBuffer(file);
-                            } else {
-                                reader.readAsText(file);
-                            }
-                            
-                            reader.addEventListener('load', function(event) {
-                                resolve(event.target.result);
-                            });
-                            
-                            reader.addEventListener('error', reject);
-                        });
-                    }
-                    return null;
-                });
-            }
-            
-            // 加载模型
-            loader.load(
-                modelUrl,
-                (gltf) => {
-                    currentModel = gltf.scene;
-                    
-                    // 启用阴影
-                    currentModel.traverse((child) => {
-                        if (child.isMesh) {
-                            child.castShadow = true;
-                            child.receiveShadow = true;
-                        }
-                    });
-                    
-                    // 调整模型大小和位置
-                    adjustModel(currentModel);
-                    
-                    // 添加到场景
-                    scene.add(currentModel);
-                    
-                    // 显示模型信息
-                    showModelInfo(modelUrl, isLocal);
-                    
-                    // 隐藏加载指示器
-                    document.getElementById('modelLoader').style.display = 'none';
-                },
-                (xhr) => {
-                    // 加载进度
-                    console.log((xhr.loaded / xhr.total * 100) + '% 已加载');
-                },
-                (error) => {
-                    // 加载错误
-                    console.error('模型加载错误:', error);
-                    document.getElementById('modelLoader').innerHTML = `
-                        <div class="text-red-500 text-center">
-                            <i class="fa fa-exclamation-triangle text-4xl mb-2"></i>
-                            <p>模型加载失败</p>
-                            <p class="text-sm mt-1">${error.message}</p>
-                        </div>
-                    `;
-                }
-            );
-        }
-        
-        // 显示模型信息
-        function showModelInfo(modelUrl, isLocal) {
-            const modelNameEl = document.getElementById('modelName');
-            const modelSizeEl = document.getElementById('modelSize');
-            const infoEl = document.getElementById('modelInfo');
-            
-            // 提取模型名称
-            const modelName = modelUrl.split('/').pop();
-            modelNameEl.textContent = modelName;
-            
-            // 显示大小（仅本地文件）
-            if (isLocal && uploadedFiles.has(modelName)) {
-                const file = uploadedFiles.get(modelName);
-                const fileSize = file.size < 1024 * 1024 
-                    ? (file.size / 1024).toFixed(1) + ' KB'
-                    : (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-                modelSizeEl.textContent = fileSize;
-            } else {
-                modelSizeEl.textContent = '远程模型';
-            }
-            
-            // 显示信息面板
-            infoEl.classList.remove('opacity-0');
-            infoEl.classList.add('opacity-100');
-        }
-        
-        // 隐藏模型信息
-        function hideModelInfo() {
-            const infoEl = document.getElementById('modelInfo');
-            infoEl.classList.remove('opacity-100');
-            infoEl.classList.add('opacity-0');
-        }
-        
-        // 调整模型大小和位置
-        function adjustModel(model) {
-            // 计算模型边界
-            const box = new THREE.Box3().setFromObject(model);
-            const size = box.getSize(new THREE.Vector3());
-            const center = box.getCenter(new THREE.Vector3());
-            
-            // 移动模型到原点
-            model.position.x = -center.x;
-            model.position.y = -center.y;
-            model.position.z = -center.z;
-            
-            // 计算模型最大尺寸
-            const maxDim = Math.max(size.x, size.y, size.z);
-            // 缩放模型以适应场景
-            const scale = 3 / maxDim;
-            model.scale.set(scale, scale, scale);
-        }
-        
-        // 窗口大小变化时调整渲染器和相机
-        function onWindowResize() {
-            const container = document.getElementById('modelCanvas');
-            camera.aspect = container.clientWidth / container.clientHeight;
+        function onCeshiWindowResize() {
+            const viewer = document.getElementById('ceshi-model-viewer');
+            camera.aspect = viewer.clientWidth / viewer.clientHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setSize(viewer.clientWidth, viewer.clientHeight);
         }
         
-        // 动画循环
-        function animate() {
-            animationId = requestAnimationFrame(animate);
+        function scanCeshiFolder(files) {
+            const modelList = document.getElementById('model-list');
+            const noModels = document.getElementById('no-models');
+            models = [];
             
-            // 如果启用了自动旋转，旋转模型
-            if (isAnimating && currentModel) {
-                currentModel.rotation.y += rotationSpeed;
-            }
+            modelList.innerHTML = '';
             
-            // 更新控制器
-            controls.update();
-            
-            // 渲染场景
-            renderer.render(scene, camera);
-        }
-        
-        // 处理文件上传
-        function handleFileUpload(files) {
-            uploadedFiles.clear();
-            const fileListEl = document.getElementById('fileList');
-            fileListEl.innerHTML = '';
-            
-            // 显示上传的文件列表
-            document.getElementById('uploadedFiles').classList.remove('hidden');
-            
-            let modelFile = null;
-            
-            // 存储所有文件
             Array.from(files).forEach(file => {
-                // 使用完整路径作为键，处理相同文件名的情况
-                const filePath = file.webkitRelativePath || file.name;
-                uploadedFiles.set(filePath, file);
-                uploadedFiles.set(file.name, file); // 同时存储文件名映射
-                
-                // 添加到文件列表
-                const li = document.createElement('li');
-                li.className = 'py-1 border-b border-gray-100 last:border-0';
-                
-                // 确定文件图标
-                let fileIcon = 'fa-file-o';
-                if (file.name.endsWith('.gltf') || file.name.endsWith('.glb')) {
-                    fileIcon = 'fa-cube';
-                    if (!modelFile) modelFile = filePath; // 记录第一个模型文件
-                } else if (file.name.endsWith('.png') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg')) {
-                    fileIcon = 'fa-file-image-o';
-                } else if (file.name.endsWith('.bin')) {
-                    fileIcon = 'fa-file-binary-o';
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (['obj', 'gltf', 'glb'].includes(extension)) {
+                    models.push(file);
                 }
-                
-                li.innerHTML = `
-                    <i class="fa ${fileIcon} mr-2 text-gray-400"></i>
-                    ${file.name} 
-                    <span class="text-xs text-gray-400 ml-2">${
-                        file.size < 1024 * 1024 
-                            ? (file.size / 1024).toFixed(1) + ' KB'
-                            : (file.size / (1024 * 1024)).toFixed(2) + ' MB'
-                    }</span>
-                `;
-                fileListEl.appendChild(li);
             });
             
-            // 如果找到模型文件，自动加载
-            if (modelFile) {
-                setTimeout(() => {
-                    loadModel(modelFile, true);
-                }, 500);
-            } else {
-                document.getElementById('modelLoader').innerHTML = `
-                    <div class="text-amber-500 text-center">
-                        <i class="fa fa-info-circle text-4xl mb-2"></i>
-                        <p>未找到模型文件</p>
-                        <p class="text-sm mt-1">请确保文件夹中包含.gltf或.glb格式的模型文件</p>
+            if (models.length === 0) {
+                noModels.textContent = '未找到支持的3D模型文件';
+                noModels.style.display = 'block';
+                return;
+            }
+            
+            noModels.style.display = 'none';
+            
+            models.forEach((file, index) => {
+                const extension = file.name.split('.').pop().toLowerCase();
+                let icon = '📁';
+                
+                if (extension === 'obj') icon = '🔷';
+                else if (extension === 'gltf' || extension === 'glb') icon = '🔶';
+                
+                const modelItem = document.createElement('div');
+                modelItem.className = 'ceshi-model-item';
+                modelItem.innerHTML = `
+                    <div class="ceshi-model-icon">${icon}</div>
+                    <div class="ceshi-model-info">
+                        <div class="ceshi-model-name">${file.name}</div>
+                        <div class="ceshi-model-type">${extension.toUpperCase()} · ${(file.size / 1024).toFixed(1)} KB</div>
                     </div>
                 `;
+                
+                modelItem.addEventListener('click', () => {
+                    document.querySelectorAll('.ceshi-model-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    modelItem.classList.add('active');
+                    loadCeshiModel(file);
+                });
+                
+                modelList.appendChild(modelItem);
+                
+                if (index === 0) {
+                    modelItem.classList.add('active');
+                    loadCeshiModel(file);
+                }
+            });
+        }
+        
+        function initCeshiEvents() {
+            document.getElementById('folder-btn').addEventListener('click', () => {
+                document.getElementById('folder-input').click();
+            });
+            
+            document.getElementById('folder-input').addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    scanCeshiFolder(files);
+                }
+            });
+            
+            document.getElementById('image-upload-btn').addEventListener('click', () => {
+                document.getElementById('image-upload-input').click();
+            });
+            
+            document.getElementById('image-upload-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                if (!file.type.match('image.*')) {
+                    alert('请选择图片文件！');
+                    return;
+                }
+                
+                const loadingElement = document.getElementById('loading');
+                loadingElement.style.display = 'block';
+                
+                setTimeout(() => {
+                    alert('图片上传成功！图生3D功能正在开发中，将使用示例模型展示效果。');
+                    
+                    const loader = new THREE.GLTFLoader();
+                    loader.load(
+                        'https://threejs.org/examples/models/gltf/LittlestTokyo.glb',
+                        (gltf) => {
+                            if (currentModel) {
+                                scene.remove(currentModel);
+                            }
+                            
+                            currentModel = gltf.scene;
+                            scene.add(currentModel);
+                            
+                            currentModel.scale.set(0.01, 0.01, 0.01);
+                            currentModel.position.set(0, -1, 0);
+                            
+                            updateCeshiModelInfo(file, currentModel, true);
+                            
+                            loadingElement.style.display = 'none';
+                            
+                            alert('3D模型生成成功！');
+                        }, undefined, function(error) {
+                            console.error('加载模型时出错:', error);
+                            loadingElement.style.display = 'none';
+                            alert('生成3D模型时出错: ' + error);
+                        });
+                }, 2000);
+            });
+            
+            document.getElementById('reset-view').addEventListener('click', () => {
+                controls.reset();
+            });
+            
+            document.getElementById('toggle-rotate').addEventListener('click', () => {
+                autoRotate = !autoRotate;
+                document.getElementById('toggle-rotate').style.background = autoRotate ? 
+                    'rgba(74, 144, 226, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+            });
+            
+            document.getElementById('model-info').addEventListener('click', () => {
+                const infoPanel = document.getElementById('info-panel');
+                infoPanel.style.display = infoPanel.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            document.getElementById('close-info').addEventListener('click', () => {
+                document.getElementById('info-panel').style.display = 'none';
+            });
+            
+            setTimeout(() => {
+                if (models.length === 0) {
+                    document.getElementById('no-models').textContent = 
+                        '点击"选择3D模型文件夹"按钮开始扫描，或使用"上传图片模式"从图片生成3D模型';
+                }
+            }, 1000);
+        }
+        
+        function updateCeshiModelInfo(file, object, isFromImage = false) {
+            const infoPanel = document.getElementById('info-panel');
+            const modelDetails = document.getElementById('model-details');
+            
+            const box = new THREE.Box3().setFromObject(object);
+            const size = box.getSize(new THREE.Vector3());
+            
+            if (isFromImage) {
+                modelDetails.innerHTML = `
+                    <p><strong>源图片:</strong> ${file.name}</p>
+                    <p><strong>生成模型格式:</strong> GLTF</p>
+                    <p><strong>模型尺寸:</strong> ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}</p>
+                    <p><strong>文件大小:</strong> ${(file.size / 1024).toFixed(1)} KB</p>
+                `;
+            } else {
+                const extension = file.name.split('.').pop().toUpperCase();
+                modelDetails.innerHTML = `
+                    <p><strong>文件名:</strong> ${file.name}</p>
+                    <p><strong>格式:</strong> ${extension}</p>
+                    <p><strong>模型尺寸:</strong> ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}</p>
+                    <p><strong>文件大小:</strong> ${(file.size / 1024).toFixed(1)} KB</p>
+                `;
             }
         }
         
-        // 初始化3D模型控制事件
-        function initModelControls() {
-            // 重置视图按钮
-            document.getElementById('resetView').addEventListener('click', function() {
-                controls.reset();
-                if (currentModel) {
-                    currentModel.rotation.set(0, 0, 0);
-                }
-                // 添加按钮动画效果
-                this.classList.add('scale-90');
-                setTimeout(() => this.classList.remove('scale-90'), 200);
-            });
+        function loadCeshiModel(file) {
+            const loadingElement = document.getElementById('loading');
+            loadingElement.style.display = 'block';
             
-            // 切换线框模式
-            document.getElementById('toggleWireframe').addEventListener('click', function() {
-                if (currentModel) {
-                    currentModel.traverse((child) => {
-                        if (child.isMesh) {
-                            child.material.wireframe = !child.material.wireframe;
-                        }
-                    });
-                }
-                // 添加按钮动画效果
-                this.classList.add('scale-90');
-                setTimeout(() => this.classList.remove('scale-90'), 200);
-            });
-            
-            // 切换坐标轴显示
-            document.getElementById('toggleAxis').addEventListener('click', function() {
-                axisHelper.visible = !axisHelper.visible;
-                // 添加按钮动画效果
-                this.classList.add('scale-90');
-                setTimeout(() => this.classList.remove('scale-90'), 200);
-            });
-            
-            // 切换动画
-            const animationBtn = document.getElementById('toggleAnimation');
-            animationBtn.addEventListener('click', function() {
-                isAnimating = !isAnimating;
-                this.innerHTML = isAnimating ? 
-                    '<i class="fa fa-pause"></i>' : 
-                    '<i class="fa fa-play"></i>';
-                // 添加按钮动画效果
-                this.classList.add('scale-90');
-                setTimeout(() => this.classList.remove('scale-90'), 200);
-            });
-            
-            // 模型选择器
-            document.getElementById('modelSelector').addEventListener('change', (e) => {
-                loadModel(e.target.value);
-            });
-            
-            // 背景颜色选择器
-            document.getElementById('bgColorPicker').addEventListener('input', (e) => {
-                scene.background = new THREE.Color(e.target.value);
-            });
-            
-            // 模型颜色选择器
-            document.getElementById('modelColorPicker').addEventListener('input', (e) => {
-                if (currentModel) {
-                    const color = new THREE.Color(e.target.value);
-                    currentModel.traverse((child) => {
-                        if (child.isMesh) {
-                            // 保存原始材质类型以便恢复
-                            if (!child.userData.originalMaterialType) {
-                                child.userData.originalMaterialType = child.material.type;
-                            }
-                            // 如果是基础材质，直接修改颜色
-                            if (child.material.type === 'MeshBasicMaterial') {
-                                child.material.color = color;
-                            } else {
-                                // 对于其他材质，创建新的基础材质以确保颜色可见
-                                child.material = new THREE.MeshBasicMaterial({
-                                    color: color,
-                                    wireframe: child.material.wireframe
-                                });
-                            }
-                        }
-                    });
-                }
-            });
-            
-            // 旋转速度控制
-            const rotationSlider = document.getElementById('rotationSpeed');
-            const rotationValue = document.getElementById('rotationSpeedValue');
-            
-            rotationSlider.addEventListener('input', (e) => {
-                rotationSpeed = parseFloat(e.target.value);
-                rotationValue.textContent = rotationSpeed.toFixed(3);
-                
-                // 如果旋转速度大于0，自动开启动画
-                if (rotationSpeed > 0 && !isAnimating) {
-                    isAnimating = true;
-                    document.getElementById('toggleAnimation').innerHTML = '<i class="fa fa-pause"></i>';
-                }
-            });
-            
-            // 文件上传处理
-            const modelUpload = document.getElementById('modelUpload');
-            const uploadArea = document.getElementById('uploadArea');
-            
-            modelUpload.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFileUpload(e.target.files);
-                    uploadArea.classList.add('border-primary');
-                    uploadArea.classList.add('bg-primary/5');
-                    setTimeout(() => {
-                        uploadArea.classList.remove('border-primary');
-                    }, 1000);
-                }
-            });
-            
-            // 拖拽上传效果
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
+            if (currentModel) {
+                scene.remove(currentModel);
             }
             
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, highlight, false);
-            });
+            const extension = file.name.split('.').pop().toLowerCase();
+            const objectUrl = URL.createObjectURL(file);
             
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight() {
-                uploadArea.classList.add('border-primary');
-                uploadArea.classList.add('bg-primary/10');
-            }
-            
-            function unhighlight() {
-                uploadArea.classList.remove('border-primary');
-                uploadArea.classList.remove('bg-primary/10');
-            }
-            
-            uploadArea.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                
-                if (files.length > 0) {
-                    handleFileUpload(files);
-                }
+            if (extension === 'obj') {
+                const objLoader = new THREE.OBJLoader();
+                objLoader.load(
+                    objectUrl,
+                    (object) => {
+                        currentModel = object;
+                        scene.add(currentModel);
+                        
+                        const box = new THREE.Box3().setFromObject(object);
+                        const center = box.getCenter(new THREE.Vector3());
+                        object.position.sub(center);
+                        
+                        updateCeshiModelInfo(file, object);
+                        
+                        loadingElement.style.display = 'none';
+                    },
+                    undefined,
+                    (error) => {
+                        console.error('加载OBJ模型时出错:', error);
+                        loadingElement.style.display = 'none';
+                        alert('加载模型时出错: ' + error.message);
+                    }
+                );
+            } else if (extension === 'gltf' || extension === 'glb') {
+                const gltfLoader = new THREE.GLTFLoader();
+                gltfLoader.load(
+                    objectUrl,
+                    (gltf) => {
+                        currentModel = gltf.scene;
+                        scene.add(currentModel);
+                        
+                        const box = new THREE.Box3().setFromObject(currentModel);
+                        const center = box.getCenter(new THREE.Vector3());
+                        currentModel.position.sub(center);
+                        
+                        updateCeshiModelInfo(file, currentModel);
+                        
+                        loadingElement.style.display = 'none';
+                    },
+                    undefined,
+                    (error) => {
+                        console.error('加载GLTF模型时出错:', error);
+                        loadingElement.style.display = 'none';
+                        alert('加载模型时出错: ' + error.message);
+                    }
+                );
             }
         }
     </script>
