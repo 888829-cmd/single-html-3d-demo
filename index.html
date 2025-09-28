@@ -588,13 +588,37 @@
             border-radius: 5px;
         }
 
-        /* Yuyi页面样式 */
+
         .yuyi-container {
             display: none;
             max-width: 1400px;
             margin: 0 auto;
             padding: 30px;
             animation: fadeIn 0.5s ease;
+        }
+
+        .gallery {
+
+        display: flex;
+        flex-wrap: wrap;
+
+        gap: 16px;
+
+        justify-content: center;
+
+        align-items: center;
+
+        padding: 16px;
+        }
+
+        .gallery img {
+        /* 统一图片宽度（高度自动适应，保持原图比例） */
+        width: 280px;
+        height: auto;
+        /* 可选：添加圆角，让图片更柔和 */
+        border-radius: 8px;
+        /* 可选：若需强制填充容器且保持比例，可加 object-fit */
+        /* object-fit: cover; */
         }
 
         @media (max-width: 992px) {
@@ -757,7 +781,23 @@
             <div class="slider-group">
                 <label class="form-label">生成结果</label>
                 <div id="imageGallery" class="gallery">
-                    <!-- 生成的图片将通过JS动态插入 -->
+                    <img 
+                            src="Car1.jpg" 
+                           
+                            class="default-preview"
+                        >
+                        <!-- 第二张：白色概念汽车 -->
+                        <img 
+                            src="Car5.png" 
+                        
+                            class="default-preview"
+                        >
+                        <!-- 第三张：银灰色轿车 -->
+                        <img 
+                            src="canny边缘轮廓图.png" 
+                    
+                            class="default-preview"
+  >
                 </div>
             </div>
 
@@ -1212,12 +1252,23 @@
             renderer.setSize(viewer.clientWidth, viewer.clientHeight);
             document.getElementById('ceshi-model-viewer').appendChild(renderer.domElement);
             
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1); // 柔和的白光，强度0.6
             scene.add(ambientLight);
             
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(5, 5, 5);
-            scene.add(directionalLight);
+            // 添加主方向光 - 模拟太阳光
+            const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight1.position.set(10, 15, 10); // 从右上方照射
+            scene.add(directionalLight1);
+            
+            // 添加辅助方向光 - 消除阴影面
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight2.position.set(-10, 10, -5); // 从左上方辅助照射
+            scene.add(directionalLight2);
+            
+            // 添加底部填充光 - 减轻底部阴影
+            const pointLight = new THREE.PointLight(0xffffff, 1, 30);
+            pointLight.position.set(0, -5, 0); // 从底部照射
+            scene.add(pointLight);
             
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
@@ -1469,6 +1520,7 @@
                 );
             }
         }
+        
     </script>
 </body>
 </html>
